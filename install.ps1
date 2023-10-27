@@ -7,7 +7,7 @@ function WriteLog {
 		[String]$Msg
 	)
 	$timeStamp = Get-Date -Format "yy/MM/dd HH:mm:ss"
-	Write-Output "[$timeStamp] $Msg" | Out-File -FilePath "$currentDate.log" -Append
+	Write-Output "[$timeStamp] $Msg" | Out-File -FilePath "C:\Users\Public\Documents\$installer-$currentDate.log" -Append
 }
 
 try {
