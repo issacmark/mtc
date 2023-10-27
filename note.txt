@@ -1,1 +1,18 @@
 https://learn.microsoft.com/en-us/mem/configmgr/core/clients/manage/manage-clients#start-client-policy-retrieval-from-the-configuration-manager-client-control-panel
+
+
+To create a file collection rule that can collect files from devices and store them in the site server, you can follow these steps1:
+
+In the Configuration Manager console, go to Assets and Compliance > Overview > Device Collections.
+Select the device collection that contains the devices from which you want to collect files.
+On the Home tab, in the Properties group, click Properties.
+On the Collection Properties dialog box, click the Collection Settings tab.
+Under File Collection, click New.
+On the File Collection Rule Properties dialog box, specify the following information:
+Name: A descriptive name for the file collection rule.
+File name: The name of the file that you want to collect. You can use wildcards (* and ?) to specify multiple files or file types.
+Path: The path of the folder that contains the file. You can use environment variables (such as %windir%) or Configuration Manager variables (such as %_SMSTSClientGUID%) to specify the path.
+Schedule: The schedule for collecting the file. You can choose to collect the file only once or on a recurring basis.
+Click OK to save the file collection rule and close the dialog box.
+Click OK to close the Collection Properties dialog box.
+The file collection rule will run according to the specified schedule and collect the files from the devices in the collection. The collected files will be stored in the site server under <Configuration Manager installation folder>\inboxes\colleval.box\FileCol\<Site Code>\<Collection ID>\<Device Name>\<File Name>
