@@ -1,0 +1,1 @@
+https://learn.microsoft.com/en-us/mem/configmgr/core/clients/manage/manage-clients#start-client-policy-retrieval-from-the-configuration-manager-client-control-panel
