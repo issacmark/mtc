@@ -14,14 +14,18 @@ try {
 	if ($installer) {
 		$current = Get-Location
 		$absolutePathToMsi = Join-Path $current "$installer"
+		if (!(Test-Path $absolutePathToMsi)) {
+		  WriteLog "[Error]: installer absent"
+		  exit 1
+		}
 		Start-Process msiexec.exe -Wait -ArgumentList "/I $absolutePathToMsi /quiet"
-		WriteLog "$installer installation successful"
+		WriteLog "[Info]：$installer installation successful"
 	} else {
-		WriteLog "please enter installer name"
+		WriteLog "[Warning]： please enter installer name"
 		exit 1
 	}
 } catch {
-	WriteLog "$_.Exception.Message"
+	WriteLog "[Error]: $_.Exception.Message"
 	exit 1
 }
 
