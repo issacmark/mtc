@@ -1,6 +1,8 @@
-param (
-	[String[]]$ChromePathList
-)
+
+
+
+$ChromePathList=1,2,3
+
 foreach ($ChromePath in $ChromePathList) {
 	if (Test-Path -Path $ChromePath) {
 		try {
@@ -14,4 +16,3 @@ foreach ($ChromePath in $ChromePathList) {
 	}
 }
 return $false
-
