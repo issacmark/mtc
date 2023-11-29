@@ -1,3 +1,6 @@
+$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
+$PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+
 # Load WinSCP .NET assembly
 Add-Type -Path "WinSCPnet.dll"
 
