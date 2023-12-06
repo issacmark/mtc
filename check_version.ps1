@@ -1,4 +1,4 @@
-
+$ChromePathList=@("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","C:\\Program Files\\Google\\","C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe")
 
 
 $ChromePathList=1,2,3
