@@ -29,3 +29,28 @@ $result2 = ExtractBrowserAndCollection($text2)
 
 Write-Host "Text 1: Browser type: $($result1.BrowserType), Collection name: $($result1.CollectionName)"
 Write-Host "Text 2: Browser type: $($result2.BrowserType), Collection name: $($result2.CollectionName)"
+
+
+
+import csv
+import json
+
+def csv_to_json(csv_file_path):
+    """Converts a CSV file to a JSON list of dictionaries."""
+
+    json_data = []
+    with open(csv_file_path, 'r') as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            json_data.append(row)
+
+    return json.dumps(json_data, indent=4)  # Indent for readability
+
+# Example usage:
+csv_file_path = 'your_csv_file.csv'  # Replace with your actual CSV file path
+json_data = csv_to_json(csv_file_path)
+print(json_data)
+
+# To save the JSON to a file:
+with open('output.json', 'w') as json_file:
+    json_file.write(json_data)
