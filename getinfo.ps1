@@ -35,22 +35,33 @@ Write-Host "Text 2: Browser type: $($result2.BrowserType), Collection name: $($r
 import csv
 import json
 
-def csv_to_json(csv_file_path):
-    """Converts a CSV file to a JSON list of dictionaries."""
+def csv_to_json_grouped(csv_file_path):
+    """Converts a CSV file to a JSON dictionary with data grouped by collection."""
 
-    json_data = []
+    grouped_data = {}
     with open(csv_file_path, 'r') as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
-            json_data.append(row)
+            collection = row["Collection"]
+            data = {
+                "Host": row["Host"],
+                "Available": row["Available"],
+                "Deadline": row["Deadline"],
+                "Browser": row["Browser"],
+                "Version": row["Version"]
+            }
+            if collection not in grouped_data:
+                grouped_data[collection] = []
+            grouped_data[collection].append(data)
 
-    return json.dumps(json_data, indent=4)  # Indent for readability
+    return json.dumps(grouped_data, indent=4)
 
 # Example usage:
-csv_file_path = 'your_csv_file.csv'  # Replace with your actual CSV file path
-json_data = csv_to_json(csv_file_path)
+csv_file_path = 'your_csv_file.csv'
+json_data = csv_to_json_grouped(csv_file_path)
 print(json_data)
 
 # To save the JSON to a file:
 with open('output.json', 'w') as json_file:
     json_file.write(json_data)
+
