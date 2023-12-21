@@ -35,8 +35,8 @@ Write-Host "Text 2: Browser type: $($result2.BrowserType), Collection name: $($r
 import csv
 import json
 
-def csv_to_json_grouped_by_collection_browser(csv_file_path):
-    """Converts a CSV file to a JSON dictionary with data grouped by collection and browser."""
+def csv_to_json_with_extraction_and_exception(csv_file_path):
+    """Converts CSV to JSON, extracts fields, groups by collection/browser, and throws exceptions for mismatches."""
 
     grouped_data = {}
     with open(csv_file_path, 'r') as csv_file:
@@ -44,26 +44,30 @@ def csv_to_json_grouped_by_collection_browser(csv_file_path):
         for row in reader:
             collection = row["Collection"]
             browser = row["Browser"]
-            data = {
-                "Host": row["Host"],
-                "Available": row["Available"],
-                "Deadline": row["Deadline"],
-                "Version": row["Version"]
-            }
+            available = row["Available"]
+            deadline = row["Deadline"]
+            version = row["Version"]
+
             if collection not in grouped_data:
                 grouped_data[collection] = {}
             if browser not in grouped_data[collection]:
-                grouped_data[collection][browser] = []
-            grouped_data[collection][browser].append(data)
+                grouped_data[collection][browser] = {
+                    "Available": available,
+                    "Deadline": deadline,
+                    "Version": version,
+                    "Hosts": []
+                }
+            else:
+                # Check for mismatches
+                if available != grouped_data[collection][browser]["Available"]:
+                    raise ValueError("Available values differ within the same group!")
+                if deadline != grouped_data[collection][browser]["Deadline"]:
+                    raise ValueError("Deadline values differ within the same group!")
+                if version != grouped_data[collection][browser]["Version"]:
+                    raise ValueError("Version values differ within the same group!")
+
+            grouped_data[collection][browser]["Hosts"].append(row["Host"])
 
     return json.dumps(grouped_data, indent=4)
 
-# Example usage:
-csv_file_path = 'your_csv_file.csv'
-json_data = csv_to_json_grouped_by_collection_browser(csv_file_path)
-print(json_data)
-
-# To save the JSON to a file:
-with open('output.json', 'w') as json_file:
-    json_file.write(json_data)
 
