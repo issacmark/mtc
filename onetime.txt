@@ -1,0 +1,5 @@
+Register-ScheduledTask -TaskName "MyOneTimeTask" -Trigger (New-ScheduledTaskTrigger -Once -At '2024-01-16T11:00:00') -Action (New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File C:\path\to\your\script.ps1")
+
+
+
+Register-ScheduledTask -TaskName "MyOneTimeTask" -Trigger (New-ScheduledTaskTrigger -Once -At '2024-01-16T11:00:00') -Action (New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File C:\path\to\your\script.ps1") -Action (New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-Command Unregister-ScheduledTask -TaskName 'MyOneTimeTask' -Confirm:$false")
