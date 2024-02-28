@@ -5,8 +5,11 @@ $latestVersion = "75.0.3770.100"
 function Update-Chrome {
     param(
         [string]$originalPath,
-        [string]$newName
-    )
+		[string]$originalName,
+        [string]$newName,
+		[string]$isReset,
+		[string]$latestVersion
+    ) 
 
     $newPath = $originalPath -replace "chrome.exe", $newName
     $chromeProcesses = Get-Process -Name "chrome" -ErrorAction SilentlyContinue
