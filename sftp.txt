@@ -1,20 +1,71 @@
 #!/bin/bash
 
-# Define server details (replace with your actual information)
-HOST="sftp_server_hostname"
-PORT=22  # default SFTP port
-USERNAME="your_username"
+# Function to handle input validation and error handling
+function validate_input() {
+  if [[ $# -ne 5 ]]; then
+    echo "Error: Usage: $0 <download/upload> <source> <destination> <host> <username>" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$2" && ! -d "$2" ]]; then
+    echo "Error: Source '$2' does not exist or is not a file/directory." >&2
+    exit 1
+  fi
+
+  if [[ -z "$3" ]]; then
+    echo "Error: Destination path is empty." >&2
+    exit 1
+  fi
+
+  if [[ -z "$4" ]]; then
+    echo "Error: Hostname is empty." >&2
+    exit 1
+  fi
+
+  if [[ -z "$5" ]]; then
+    echo "Error: Username is empty." >&2
+    exit 1
+  fi
+}
+
+# Read arguments from command line
+action="$1"
+source="$2"
+destination="$3"
+host="$4"
+username="$5"
+
+# Validate input
+validate_input "$action" "$source" "$destination" "$host" "$username"
+
+# Define password (replace with your actual password)
 PASSWORD="your_password"
 
-# Define remote and local directories (replace with your actual paths)
-REMOTE_DIR="/path/to/remote/install"
-LOCAL_DIR="/path/to/local/local_installer"
+# SFTP command prefix
+sftp_cmd="sftp -oStrictHostKeyChecking=no $username@$host"  # Disable StrictHostKeyChecking (not recommended for production)
 
-# Download all files from the remote directory
-for file in $(curl -sftp sftp://$USERNAME:$PASSWORD@$HOST:$PORT -l $REMOTE_DIR); do
-  # Extract filename from listing output
-  filename=$(basename "$file")
-  curl -sftp sftp://$USERNAME:$PASSWORD@$HOST:$PORT -O $LOCAL_DIR/$filename $REMOTE_DIR/$filename
-done
+# Construct download or upload command based on user input
+if [[ "$action" == "download" ]]; then
+  # Ensure destination is a local directory
+  if [[ ! -d "$destination" ]]; then
+    echo "Error: Destination '$destination' is not a directory for download." >&2
+    exit 1
+  fi
 
-echo "Download completed."
+  command="$sftp_cmd:$source $destination"
+elif [[ "$action" == "upload" ]]; then
+  command="scp $source $sftp_cmd:$destination"
+else
+  echo "Error: Invalid operation '$action'." >&2
+  exit 1
+fi
+
+# Execute the command with password using echo pipe
+echo "$PASSWORD" | $command
+
+# Report success or failure (redirecting output and error to improve clarity)
+if [[ $? -eq 0 ]]; then
+  echo "Operation completed successfully."
+else
+  echo "Operation failed with exit code: $?" >&2
+fi
