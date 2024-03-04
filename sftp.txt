@@ -1,69 +1,48 @@
-import paramiko
+import os
+import ftplib
 
-# Function to handle downloading files
-def download_file(sftp_client, remote_path, local_path):
+# Function to download a file
+def download_file(ftp_client, remote_path, local_path):
   try:
-    sftp_client.get(remote_path, local_path)
+    with open(local_path, 'wb') as local_file:
+      ftp_client.retrbinary('RETR ' + remote_path, local_file.write)
     print(f"Download successful: {remote_path} -> {local_path}")
   except Exception as e:
     print(f"Download failed: {e}")
 
-# Function to upload files
-def upload_file(sftp_client, local_path, remote_path):
+# Function to upload a file
+def upload_file(ftp_client, local_path, remote_path):
   try:
-    sftp_client.put(local_path, remote_path)
+    with open(local_path, 'rb') as local_file:
+      ftp_client.storbinary('STOR ' + remote_path, local_file)
     print(f"Upload successful: {local_path} -> {remote_path}")
   except Exception as e:
     print(f"Upload failed: {e}")
-
-# Function to handle directory uploads (recursive)
-def upload_folder(sftp_client, local_path, remote_path):
-  for dirpath, dirnames, filenames in os.walk(local_path):
-    # Create remote directory on the server if it doesn't exist
-    remote_dir = os.path.join(remote_path, os.path.relpath(dirpath, local_path))
-    try:
-      sftp_client.mkdir(remote_dir)
-    except OSError:
-      pass  # Ignore errors if the directory already exists
-    # Upload individual files within the directory
-    for filename in filenames:
-      local_file = os.path.join(dirpath, filename)
-      remote_file = os.path.join(remote_dir, filename)
-      upload_file(sftp_client, local_file, remote_file)
 
 # Get user input
 host = input("Enter SFTP server hostname: ")
 username = input("Enter SFTP username: ")
 password = input("Enter SFTP password: ")
 operation = input("Enter operation (download/upload): ")
-source_path = input("Enter source path (local or remote): ")  # User needs to specify full path
-destination_path = input("Enter destination path (local or remote): ")  # User needs to specify full path
+source_path = input("Enter source path (local file): ")
+destination_path = input("Enter destination path (remote file): ")
 
-# Connect to SFTP server
+# Connect to FTP server (FTP is not SFTP, but offers basic file transfer)
 try:
-  client = paramiko.SSHClient()
-  client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-  client.connect(hostname=host, username=username, password=password)
-  sftp_client = client.open_sftp()
+  ftp_client = ftplib.FTP(host, username, password)
 except Exception as e:
   print(f"Connection failed: {e}")
   exit(1)
 
 # Perform download or upload operation
 if operation.lower() == "download":
-  download_file(sftp_client, source_path, destination_path)
+  download_file(ftp_client, source_path, destination_path)
 elif operation.lower() == "upload":
-  if os.path.isfile(source_path):
-    upload_file(sftp_client, source_path, destination_path)
-  elif os.path.isdir(source_path):
-    upload_folder(sftp_client, source_path, destination_path)
-  else:
-    print(f"Error: Source path '{source_path}' is not a valid file or directory.")
+  upload_file(ftp_client, source_path, destination_path)
 else:
   print(f"Error: Invalid operation '{operation}'.")
 
 # Close connection
-sftp_client.close()
-client.close()
+ftp_client.quit()
 
 print("Operation completed.")
