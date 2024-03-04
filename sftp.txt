@@ -1,40 +1,65 @@
-#!/bin/bash
+import os
+import paramiko
 
-# Credentials and paths (replace with your values)
-SFTP_HOST="your_sftp_hostname"
-SFTP_USERNAME="your_sftp_username"
-SFTP_PASSWORD="your_sftp_password"
-LOCAL_FOLDER="/path/to/local/folder"
-REMOTE_FOLDER="/path/to/remote/folder"
+def download_folder(sftp, remote_folder, local_folder):
+    try:
+        # Create local folder if it doesn't exist
+        os.makedirs(local_folder, exist_ok=True)
 
-# Download a folder
-function download_folder() {
-  # Use sftp with additional debugging output
-  sftp -oBatchMode=no -oStrictHostKeyChecking=no -vvv -b - $SFTP_USERNAME@$SFTP_HOST << EOF
-  cd "$REMOTE_FOLDER"
-  get -r * $LOCAL_FOLDER
-EOF
-}
+        # List files in the remote folder
+        files = sftp.listdir(remote_folder)
 
-# Upload a folder
-function upload_folder() {
-  # Use sftp with additional debugging output
-  sftp -oBatchMode=no -oStrictHostKeyChecking=no -vvv -b - $SFTP_USERNAME@$SFTP_HOST << EOF
-  cd "$REMOTE_FOLDER"
-  put -r $LOCAL_FOLDER/* .
-EOF
-}
+        # Download each file
+        for file in files:
+            remote_path = os.path.join(remote_folder, file)
+            local_path = os.path.join(local_folder, file)
+            sftp.get(remote_path, local_path)
+            print(f"Downloaded: {file}")
 
-# Choose operation
-operation="$1"
+        print("Download completed successfully.")
+    except Exception as e:
+        print(f"Error downloading folder: {e}")
 
-if [[ $operation == "download" ]]; then
-  download_folder
-elif [[ $operation == "upload" ]]; then
-  upload_folder
-else
-  echo "Invalid operation. Please specify 'download' or 'upload'."
-  exit 1
-fi
+def upload_folder(sftp, local_folder, remote_folder):
+    try:
+        # List files in the local folder
+        files = os.listdir(local_folder)
 
-exit 0
+        # Upload each file
+        for file in files:
+            local_path = os.path.join(local_folder, file)
+            remote_path = os.path.join(remote_folder, file)
+            sftp.put(local_path, remote_path)
+            print(f"Uploaded: {file}")
+
+        print("Upload completed successfully.")
+    except Exception as e:
+        print(f"Error uploading folder: {e}")
+
+def main():
+    # SFTP credentials and paths
+    sftp_host = "your_sftp_hostname"
+    sftp_port = 22
+    sftp_username = "your_sftp_username"
+    sftp_password = "your_sftp_password"
+    remote_folder = "/path/to/remote/folder"
+    local_folder = "/path/to/local/folder"
+
+    try:
+        # Establish an SFTP connection
+        transport = paramiko.Transport((sftp_host, sftp_port))
+        transport.connect(username=sftp_username, password=sftp_password)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+
+        # Download or upload folder (choose one)
+        # download_folder(sftp, remote_folder, local_folder)
+        # upload_folder(sftp, local_folder, remote_folder)
+
+        # Close the SFTP connection
+        sftp.close()
+        transport.close()
+    except Exception as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    main()
