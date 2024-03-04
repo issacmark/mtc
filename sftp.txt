@@ -1,71 +1,69 @@
-#!/bin/bash
+import paramiko
 
-# Function to handle input validation and error handling
-function validate_input() {
-  if [[ $# -ne 5 ]]; then
-    echo "Error: Usage: $0 <download/upload> <source> <destination> <host> <username>" >&2
-    exit 1
-  fi
+# Function to handle downloading files
+def download_file(sftp_client, remote_path, local_path):
+  try:
+    sftp_client.get(remote_path, local_path)
+    print(f"Download successful: {remote_path} -> {local_path}")
+  except Exception as e:
+    print(f"Download failed: {e}")
 
-  if [[ ! -f "$2" && ! -d "$2" ]]; then
-    echo "Error: Source '$2' does not exist or is not a file/directory." >&2
-    exit 1
-  fi
+# Function to upload files
+def upload_file(sftp_client, local_path, remote_path):
+  try:
+    sftp_client.put(local_path, remote_path)
+    print(f"Upload successful: {local_path} -> {remote_path}")
+  except Exception as e:
+    print(f"Upload failed: {e}")
 
-  if [[ -z "$3" ]]; then
-    echo "Error: Destination path is empty." >&2
-    exit 1
-  fi
+# Function to handle directory uploads (recursive)
+def upload_folder(sftp_client, local_path, remote_path):
+  for dirpath, dirnames, filenames in os.walk(local_path):
+    # Create remote directory on the server if it doesn't exist
+    remote_dir = os.path.join(remote_path, os.path.relpath(dirpath, local_path))
+    try:
+      sftp_client.mkdir(remote_dir)
+    except OSError:
+      pass  # Ignore errors if the directory already exists
+    # Upload individual files within the directory
+    for filename in filenames:
+      local_file = os.path.join(dirpath, filename)
+      remote_file = os.path.join(remote_dir, filename)
+      upload_file(sftp_client, local_file, remote_file)
 
-  if [[ -z "$4" ]]; then
-    echo "Error: Hostname is empty." >&2
-    exit 1
-  fi
+# Get user input
+host = input("Enter SFTP server hostname: ")
+username = input("Enter SFTP username: ")
+password = input("Enter SFTP password: ")
+operation = input("Enter operation (download/upload): ")
+source_path = input("Enter source path (local or remote): ")  # User needs to specify full path
+destination_path = input("Enter destination path (local or remote): ")  # User needs to specify full path
 
-  if [[ -z "$5" ]]; then
-    echo "Error: Username is empty." >&2
-    exit 1
-  fi
-}
+# Connect to SFTP server
+try:
+  client = paramiko.SSHClient()
+  client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+  client.connect(hostname=host, username=username, password=password)
+  sftp_client = client.open_sftp()
+except Exception as e:
+  print(f"Connection failed: {e}")
+  exit(1)
 
-# Read arguments from command line
-action="$1"
-source="$2"
-destination="$3"
-host="$4"
-username="$5"
+# Perform download or upload operation
+if operation.lower() == "download":
+  download_file(sftp_client, source_path, destination_path)
+elif operation.lower() == "upload":
+  if os.path.isfile(source_path):
+    upload_file(sftp_client, source_path, destination_path)
+  elif os.path.isdir(source_path):
+    upload_folder(sftp_client, source_path, destination_path)
+  else:
+    print(f"Error: Source path '{source_path}' is not a valid file or directory.")
+else:
+  print(f"Error: Invalid operation '{operation}'.")
 
-# Validate input
-validate_input "$action" "$source" "$destination" "$host" "$username"
+# Close connection
+sftp_client.close()
+client.close()
 
-# Define password (replace with your actual password)
-PASSWORD="your_password"
-
-# SFTP command prefix
-sftp_cmd="sftp -oStrictHostKeyChecking=no $username@$host"  # Disable StrictHostKeyChecking (not recommended for production)
-
-# Construct download or upload command based on user input
-if [[ "$action" == "download" ]]; then
-  # Ensure destination is a local directory
-  if [[ ! -d "$destination" ]]; then
-    echo "Error: Destination '$destination' is not a directory for download." >&2
-    exit 1
-  fi
-
-  command="$sftp_cmd:$source $destination"
-elif [[ "$action" == "upload" ]]; then
-  command="scp $source $sftp_cmd:$destination"
-else
-  echo "Error: Invalid operation '$action'." >&2
-  exit 1
-fi
-
-# Execute the command with password using echo pipe
-echo "$PASSWORD" | $command
-
-# Report success or failure (redirecting output and error to improve clarity)
-if [[ $? -eq 0 ]]; then
-  echo "Operation completed successfully."
-else
-  echo "Operation failed with exit code: $?" >&2
-fi
+print("Operation completed.")
