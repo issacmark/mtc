@@ -1,86 +1,38 @@
-import os
-import paramiko
+#!/bin/bash
 
+# Credentials and paths (replace with your values)
+SFTP_HOST="your_sftp_hostname"
+SFTP_USERNAME="your_sftp_username"
+SFTP_PASSWORD="your_sftp_password"
+LOCAL_FOLDER="/path/to/local/folder"
+REMOTE_FOLDER="/path/to/remote/folder"
 
-# Function to download a directory recursively
-def download_directory(sftp_client, remote_dir, local_dir):
-  try:
-    # Create local directory if it doesn't exist
-    if not os.path.exists(local_dir):
-      os.makedirs(local_dir)
+# Download a folder
+function download_folder() {
+  sftp -oBatchMode=no -b - $SFTP_USERNAME@$SFTP_HOST << EOF
+  cd $REMOTE_FOLDER
+  get -r * $LOCAL_FOLDER
+  EOF
+}
 
-    # Iterate through remote directory structure
-    for remote_filename in sftp_client.listdir(remote_dir):
-      remote_filepath = os.path.join(remote_dir, remote_filename)
-      local_filepath = os.path.join(local_dir, remote_filename)
+# Upload a folder
+function upload_folder() {
+  sftp -oBatchMode=no -b - $SFTP_USERNAME@$SFTP_HOST << EOF
+  cd $REMOTE_FOLDER
+  put -r $LOCAL_FOLDER/* .
+  EOF
+}
 
-      # Check for subdirectories
-      if sftp_client.stat(remote_filepath).st_isdir():
-        download_directory(sftp_client, remote_filepath, local_filepath)
-      else:
-        # Download file
-        sftp_client.get(remote_filepath, local_filepath)
-        print(f"Downloaded: {remote_filepath} -> {local_filepath}")
-  except Exception as e:
-    print(f"Download error: {e}")
+# Choose operation
+operation="$1"
 
+if [[ $operation == "download" ]]; then
+  download_folder
+elif [[ $operation == "upload" ]]; then
+  upload_folder
+else
+  echo "Invalid operation. Please specify 'download' or 'upload'."
+  exit 1
+fi
 
-# Function to upload a directory recursively
-def upload_directory(sftp_client, local_dir, remote_dir):
-  try:
-    # Create remote directory if it doesn't exist
-    try:
-      sftp_client.mkdir(remote_dir)
-    except OSError:  # Ignore errors if directory already exists
-      pass
-
-    # Iterate through local directory structure
-    for root, _, filenames in os.walk(local_dir):
-      for filename in filenames:
-        local_filepath = os.path.join(root, filename)
-        remote_filepath = os.path.join(remote_dir, os.path.relpath(local_filepath, local_dir))
-
-        # Upload file
-        sftp_client.put(local_filepath, remote_filepath)
-        print(f"Uploaded: {local_filepath} -> {remote_filepath}")
-  except Exception as e:
-    print(f"Upload error: {e}")
-
-
-# Get user input
-host = input("Enter SFTP server hostname: ")
-username = input("Enter SFTP username: ")
-password = input("Enter SFTP password: ")
-operation = input("Enter operation (download/upload): ")
-source_path = input("Enter source path (local or remote): ")  # User needs to specify full path
-destination_path = input("Enter destination path (local or remote): ")  # User needs to specify full path
-
-# Connect to SFTP server
-try:
-  client = paramiko.SSHClient()
-  client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-  client.connect(hostname=host, username=username, password=password)
-  sftp_client = client.open_sftp()
-except Exception as e:
-  print(f"Connection failed: {e}")
-  exit(1)
-
-# Perform download or upload operation
-if operation.lower() == "download":
-  if os.path.isdir(source_path):
-    download_directory(sftp_client, source_path, destination_path)
-  else:
-    print(f"Error: Source path '{source_path}' is not a directory.")
-elif operation.lower() == "upload":
-  if os.path.isdir(source_path):
-    upload_directory(sftp_client, source_path, destination_path)
-  else:
-    print(f"Error: Source path '{source_path}' is not a directory.")
-else:
-  print(f"Error: Invalid operation '{operation}'.")
-
-# Close connection
-sftp_client.close()
-client.close()
-
-print("Operation completed.")
+exit 0
