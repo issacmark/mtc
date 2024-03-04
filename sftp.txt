@@ -6,15 +6,19 @@ def download_folder(sftp, remote_folder, local_folder):
         # Create local folder if it doesn't exist
         os.makedirs(local_folder, exist_ok=True)
 
-        # List files in the remote folder
-        files = sftp.listdir(remote_folder)
+        # List files and directories in the remote folder
+        files = sftp.listdir_attr(remote_folder)
 
-        # Download each file
-        for file in files:
-            remote_path = os.path.join(remote_folder, file)
-            local_path = os.path.join(local_folder, file)
-            sftp.get(remote_path, local_path)
-            print(f"Downloaded: {file}")
+        # Download each file or subfolder
+        for item in files:
+            remote_path = os.path.join(remote_folder, item.filename)
+            local_path = os.path.join(local_folder, item.filename)
+            if item.st_mode & 0o400:  # Regular file
+                sftp.get(remote_path, local_path)
+                print(f"Downloaded file: {item.filename}")
+            elif item.st_mode & 0o200:  # Subfolder
+                download_folder(sftp, remote_path, local_path)
+                print(f"Downloaded subfolder: {item.filename}")
 
         print("Download completed successfully.")
     except Exception as e:
@@ -22,15 +26,20 @@ def download_folder(sftp, remote_folder, local_folder):
 
 def upload_folder(sftp, local_folder, remote_folder):
     try:
-        # List files in the local folder
-        files = os.listdir(local_folder)
+        # List files and directories in the local folder
+        items = os.listdir(local_folder)
 
-        # Upload each file
-        for file in files:
-            local_path = os.path.join(local_folder, file)
-            remote_path = os.path.join(remote_folder, file)
-            sftp.put(local_path, remote_path)
-            print(f"Uploaded: {file}")
+        # Upload each file or subfolder
+        for item in items:
+            local_path = os.path.join(local_folder, item)
+            remote_path = os.path.join(remote_folder, item)
+            if os.path.isfile(local_path):
+                sftp.put(local_path, remote_path)
+                print(f"Uploaded file: {item}")
+            elif os.path.isdir(local_path):
+                sftp.mkdir(remote_path)
+                upload_folder(sftp, local_path, remote_path)
+                print(f"Uploaded subfolder: {item}")
 
         print("Upload completed successfully.")
     except Exception as e:
