@@ -7,21 +7,22 @@ SFTP_PASSWORD="your_sftp_password"
 LOCAL_FOLDER="/path/to/local/folder"
 REMOTE_FOLDER="/path/to/remote/folder"
 
-# Download a folder from SFTP
+# Download a folder
 function download_folder() {
-  # Download files recursively using SCP
-  for file in $(curl -u "$SFTP_USERNAME:$SFTP_PASSWORD" "scp://$SFTP_HOST$REMOTE_FOLDER" | grep -v '/$'); do
-    curl -u "$SFTP_USERNAME:$SFTP_PASSWORD" "scp://$SFTP_HOST$REMOTE_FOLDER/$file" -o "$LOCAL_FOLDER/$file"
-  done
+  # Use sftp with additional debugging output
+  sftp -oBatchMode=no -oStrictHostKeyChecking=no -vvv -b - $SFTP_USERNAME@$SFTP_HOST << EOF
+  cd "$REMOTE_FOLDER"
+  get -r * $LOCAL_FOLDER
+EOF
 }
 
-# Upload a folder to SFTP
+# Upload a folder
 function upload_folder() {
-  # Upload files recursively using SCP
-  for file in "$LOCAL_FOLDER"/*; do
-    filename=$(basename "$file")
-    curl -u "$SFTP_USERNAME:$SFTP_PASSWORD" -T "$file" "scp://$SFTP_HOST$REMOTE_FOLDER/$filename"
-  done
+  # Use sftp with additional debugging output
+  sftp -oBatchMode=no -oStrictHostKeyChecking=no -vvv -b - $SFTP_USERNAME@$SFTP_HOST << EOF
+  cd "$REMOTE_FOLDER"
+  put -r $LOCAL_FOLDER/* .
+EOF
 }
 
 # Choose operation
