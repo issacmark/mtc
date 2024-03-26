@@ -1,0 +1,52 @@
+# Define the root folder for the services
+$serviceRootPath = "C:\Path\To\ArcSight\Root" # Replace with the actual root path
+
+# Get the list of ArcSight services
+$arcsightServices = Get-Service | Where-Object { $_.DisplayName -like "*ArcSight*" }
+
+foreach ($service in $arcsightServices) {
+    # Define the path to the service key folder
+    $serviceKeyPath = Join-Path -Path $serviceRootPath -ChildPath "current\user\agent\keys"
+
+    # Delete the service key folder
+    Remove-Item -Path $serviceKeyPath -Recurse -Force -ErrorAction SilentlyContinue
+
+    # Stop the service if running
+    if ($service.Status -eq 'Running') {
+        try {
+            Stop-Service -Name $service.Name -Force -ErrorAction Stop
+        } catch {
+            # If failed to stop, kill the related process
+            $serviceProcess = Get-WmiObject -Class Win32_Service -Filter "Name='$($service.Name)'"
+            if ($serviceProcess -ne $null) {
+                Stop-Process -Id $serviceProcess.ProcessId -Force
+            }
+        }
+    }
+
+    # Start the service
+    try {
+        Start-Service -Name $service.Name -ErrorAction Stop
+    } catch {
+        Write-Host "Failed to start service $($service.Name): $_"
+        continue
+    }
+
+    # Change the startup type to Automatic (Delayed Start)
+    Set-Service -Name $service.Name -StartupType 'AutomaticDelayedStart'
+}
+
+Write-Host "ArcSight services restart and configuration complete."
+
+
+
+
+$service = Get-Service -Name spoolsv
+if ($service.Status -eq 'Running') {
+    $process = Get-WmiObject -Class Win32_Process -Filter "Name='spoolsv.exe'"
+    $startTime = $process.ConvertToDateTime($process.CreationDate)
+    $uptime = (Get-Date) - $startTime
+    "Service '{0}' has been running for {1} days, {2} hours, {3} minutes, and {4} seconds" -f $service.Name, $uptime.Days, $uptime.Hours, $uptime.Minutes, $uptime.Seconds
+} else {
+    "Service '{0}' is not running." -f $service.Name
+}
