@@ -50,3 +50,20 @@ if ($service.Status -eq 'Running') {
 } else {
     "Service '{0}' is not running." -f $service.Name
 }
+
+
+# Define the full path to the specific java.exe you are interested in.
+$specificJavaPath = "D:\folder1\jre\java.exe"
+
+# Get all the processes that are instances of java.exe.
+$javaProcesses = Get-WmiObject Win32_Process -Filter "Name = 'java.exe'"
+
+# Filter the processes to find the one with the specific path.
+$targetProcess = $javaProcesses | Where-Object { $_.ExecutablePath -eq $specificJavaPath }
+
+# Output the Process ID if the specific java.exe is running.
+if ($targetProcess) {
+    Write-Host "Process ID of $specificJavaPath: $($targetProcess.ProcessId)"
+} else {
+    Write-Host "No running process found for $specificJavaPath"
+}
