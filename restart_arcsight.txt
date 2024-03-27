@@ -77,3 +77,12 @@ if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     Write-Output "This script must be run as an administrator to access process modules."
     exit
 }
+
+$processId = YOUR_PROCESS_ID_HERE # Replace with your actual process ID
+try {
+    $process = [System.Diagnostics.Process]::GetProcessById($processId)
+    $executablePath = $process.MainModule.FileName
+    Write-Output "Executable Path: $executablePath"
+} catch {
+    Write-Output "Unable to retrieve the executable path. The process might be protected or running with higher privileges."
+}
