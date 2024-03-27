@@ -1,3 +1,7 @@
+$processID = (Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "java.exe").ProcessId
+$executablePath = (Get-WmiObject Win32_Process -Filter "ProcessId = $processID").ExecutablePath
+Write-Output "Executable Path: $executablePath"
+
 # Define the root folder for the services
 $serviceRootPath = "C:\Path\To\ArcSight\Root" # Replace with the actual root path
 
