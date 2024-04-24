@@ -1,12 +1,14 @@
 Classification = 
 VAR Today = TODAY()
-VAR Dt1 = IF(ISBLANK([dt1]), BLANK(), DATEVALUE([dt1]))
-VAR Dt2 = IF(ISBLANK([dt2]), BLANK(), DATEVALUE([dt2]))
+VAR DefaultDate = DATE(1899, 12, 30)
+VAR Dt1 = IF([dt1] = DefaultDate, BLANK(), [dt1])
+VAR Dt2 = IF([dt2] = DefaultDate, BLANK(), [dt2])
 VAR DateToCompare = IF(ISBLANK(Dt2), Dt1, Dt2)
-VAR DaysDifference = DATEDIFF(DateToCompare, Today, DAY)
+VAR DaysDifference = IF(ISBLANK(DateToCompare), BLANK(), DATEDIFF(DateToCompare, Today, DAY))
 RETURN
     SWITCH(
         TRUE(),
+        DaysDifference = BLANK(), "Invalid Date",
         DaysDifference > 60 && DaysDifference <= 90, "2to3month",
         DaysDifference > 30 && DaysDifference <= 60, "1to2month",
         DaysDifference >= 7 && DaysDifference <= 30, "1week to 1month",
