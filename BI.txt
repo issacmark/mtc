@@ -1,0 +1,14 @@
+Classification = 
+VAR Today = TODAY()
+VAR DateToCompare = IF(ISBLANK([dt2]), [dt1], [dt2])
+VAR DaysDifference = DATEDIFF(DateToCompare, Today, DAY)
+RETURN
+    SWITCH(
+        TRUE(),
+        DaysDifference >= 61 AND DaysDifference <= 90, "2to3month",
+        DaysDifference >= 31 AND DaysDifference <= 60, "1to2month",
+        DaysDifference >= 7 AND DaysDifference < 31, "1week to 1month",
+        DaysDifference >= 0 AND DaysDifference < 7, "within1week",
+        DaysDifference < 0, "exceed deadline",
+        "other"
+    )
