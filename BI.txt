@@ -16,3 +16,14 @@ RETURN
         DaysDifference < 0, "exceed deadline",
         "other"
     )
+
+
+
+function main(workbook: ExcelScript.Workbook): void {
+  let sheet = workbook.getActiveWorksheet();
+  // Get the used range in the worksheet, limited to the columns A to AF
+  let usedRange = sheet.getRange("A1:AF" + sheet.getUsedRange().getLastRow().getRowIndex());
+  // Create a table with the used range
+  let table = workbook.addTable(usedRange, true);
+  table.setName("MyNewTable");
+}
