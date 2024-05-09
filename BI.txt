@@ -27,3 +27,17 @@ function main(workbook: ExcelScript.Workbook): void {
   let table = workbook.addTable(usedRange, true);
   table.setName("MyNewTable");
 }
+
+
+NewColumn = 
+IF(
+    ISBLANK([YourColumn]), 
+    "Default or Special Handling for Null", 
+    IF(
+        [YourColumn] = "SomeCondition1" || 
+        [YourColumn] = "SomeCondition2" || 
+        [YourColumn] = "SomeCondition3", 
+        "ResultIfTrue", 
+        "ResultIfFalse"
+    )
+)
