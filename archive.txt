@@ -6,25 +6,19 @@ PRIVATE_TOKEN="your_private_token"
 # Base URL for your GitLab instance
 GITLAB_URL="https://gitlab.example.com"
 
-# An array of project names you wish to archive
-PROJECT_NAMES=("project-name-1" "project-name-2")
+# Project name and group in the format "group/project"
+PROJECT_FULL_PATH="ces/terraform-aws-acm"
 
-# Loop through each project name to get the project ID
-for PROJECT_NAME in "${PROJECT_NAMES[@]}"
-do
-  echo "Fetching project ID for $PROJECT_NAME"
-  
-  # URL encode the project name
-  ENCODED_PROJECT_NAME=$(echo $PROJECT_NAME | jq -sRr @uri)
-  
-  # Make API call to get the project ID
-  PROJECT_ID=$(curl --header "PRIVATE-TOKEN: $PRIVATE_TOKEN" "$GITLAB_URL/api/v4/projects/$ENCODED_PROJECT_NAME" | jq '.id')
-  
-  if [ "$PROJECT_ID" != "null" ]; then
-    echo "Archiving project ID $PROJECT_ID"
-    # Archive the project
-    curl --request POST --header "PRIVATE-TOKEN: $PRIVATE_TOKEN" "$GITLAB_URL/api/v4/projects/$PROJECT_ID/archive"
-  else
-    echo "Project $PROJECT_NAME not found"
-  fi
-done
+# URL encode the project full path
+ENCODED_PROJECT_NAME=$(echo $PROJECT_FULL_PATH | jq -sRr @uri)
+
+# Make API call to get the project ID
+PROJECT_ID=$(curl --header "PRIVATE-TOKEN: $PRIVATE_TOKEN" "$GITLAB_URL/api/v4/projects/$ENCODED_PROJECT_NAME" | jq '.id')
+
+if [ "$PROJECT_ID" != "null" ]; then
+  echo "Archiving project ID $PROJECT_ID"
+  # Archive the project
+  curl --request POST --header "PRIVATE-TOKEN: $PRIVATE_TOKEN" "$GITLAB_URL/api/v4/projects/$PROJECT_ID/archive"
+else
+  echo "Project $PROJECT_FULL_PATH not found"
+fi
