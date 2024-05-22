@@ -41,3 +41,5 @@ IF(
         "ResultIfFalse"
     )
 )
+
+   concat(split(triggerOutputs()?['headers']['x-ms-file-name-encoded'], '.')[0], '_', utcNow('yyyy-MM-dd'), '.', last(split(triggerOutputs()?['headers']['x-ms-file-name-encoded'], '.')))
