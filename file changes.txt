@@ -1,0 +1,18 @@
+stages:
+  - detect_changes
+
+detect-file-changes:
+  stage: detect_changes
+  script:
+    - |
+      # Fetch the target branch (the one the MR is aiming to merge into)
+      git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME:$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+      # Compare the source branch of the MR against the target, listing names of changed files
+      git diff --name-only FETCH_HEAD...$CI_COMMIT_SHA > changed_files.txt
+      # Display the list of changed files (for debugging/verification purposes)
+      cat changed_files.txt
+  artifacts:
+    paths:
+      - changed_files.txt
+  only:
+    - merge_requests
