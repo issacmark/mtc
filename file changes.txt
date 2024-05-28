@@ -16,3 +16,9 @@ detect-file-changes:
       - changed_files.txt
   only:
     - merge_requests
+
+
+#!/bin/bash
+
+kw="keyword"  # Set your keyword here
+grep "$kw" file.txt | sed "s/\(${kw}\).*/\1/" | sort -u > new_file.txt
