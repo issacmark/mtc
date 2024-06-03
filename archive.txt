@@ -22,3 +22,29 @@ if [ "$PROJECT_ID" != "null" ]; then
 else
   echo "Project $PROJECT_FULL_PATH not found"
 fi
+
+
+#!/bin/bash
+
+# SFTP credentials and server details
+SFTP_USER="username"
+SFTP_HOST="sftp.example.com"
+SFTP_PASSWORD="password"
+FILE_PATH="/path/to/directory/yourfile.txt"
+BATCH_FILE="sftp_commands.txt"
+
+# Command to check file existence
+echo "ls ${FILE_PATH}" > ${BATCH_FILE}
+
+# Execute SFTP command and capture output
+OUTPUT=$(sshpass -p "${SFTP_PASSWORD}" sftp -oBatchMode=no -b ${BATCH_FILE} ${SFTP_USER}@${SFTP_HOST} 2>/dev/null)
+
+# Check if the file exists
+if echo "${OUTPUT}" | grep -q "$(basename ${FILE_PATH})"; then
+  echo "File exists."
+else
+  echo "File does not exist."
+fi
+
+# Clean up: Optionally remove the batch file
+rm ${BATCH_FILE}
