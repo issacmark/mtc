@@ -43,3 +43,8 @@ IF(
 )
 
    concat(split(triggerOutputs()?['headers']['x-ms-file-name-encoded'], '.')[0], '_', utcNow('yyyy-MM-dd'), '.', last(split(triggerOutputs()?['headers']['x-ms-file-name-encoded'], '.')))
+
+
+Equal = IF(ISBLANK('YourTable'[Column1]), 'YourTable'[Column2],
+          IF(ISBLANK('YourTable'[Column2]), 'YourTable'[Column1],
+          IF('YourTable'[Column1] = 'YourTable'[Column2], "Yes", "No")))
