@@ -1,0 +1,15 @@
+1. Cluttered Commit History
+Problem: Regular merge commits can clutter the commit history, making it difficult to follow the development progress.
+Solution: By rebasing the feature branch before merging, this strategy keeps the commit history linear and clean, while still marking the merge points with a merge commit.
+2. Conflict Resolution
+Problem: Merging branches without rebasing can lead to frequent and complex conflicts, especially in long-running feature branches.
+Solution: Rebasing the feature branch onto the latest main branch ensures that conflicts are resolved before the final merge, reducing the likelihood of conflicts during the merge process.
+3. Tracking Feature Integration
+Problem: Fast-forward merges do not create merge commits, making it hard to track when and where features were integrated.
+Solution: This strategy creates a merge commit, clearly indicating when a feature branch was integrated into the main branch, which is useful for tracking and auditing purposes.
+4. Maintaining Context
+Problem: Pure rebasing can lose the context of when and why branches were merged.
+Solution: The merge commit provides a clear marker in the history, preserving the context of the integration while maintaining a linear history.
+5. Simplifying History for Review
+Problem: A non-linear history with many merge commits can be hard to review and understand.
+Solution: A semi-linear history simplifies the review process by presenting a straightforward, linear sequence of commits, making it easier to understand the progression of changes.
