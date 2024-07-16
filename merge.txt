@@ -13,3 +13,9 @@ Solution: The merge commit provides a clear marker in the history, preserving th
 5. Simplifying History for Review
 Problem: A non-linear history with many merge commits can be hard to review and understand.
 Solution: A semi-linear history simplifies the review process by presenting a straightforward, linear sequence of commits, making it easier to understand the progression of changes.
+
+
+if [ "$(git symbolic-ref --short HEAD)" = "main" ]; then
+  echo "Rebasing on the main branch is not allowed."
+  exit 1
+fi
