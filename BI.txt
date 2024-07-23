@@ -55,3 +55,9 @@ Equal = if IsBlank([YourTable][Column1]) then [YourTable][Column2]
         else if [YourTable][Column1] = [YourTable][Column2] then "Yes"
         else "No"
 
+    = Table.Group(
+        Source, 
+        {"host"}, 
+        {{"UniqueSystemIDCount", each List.Count(List.Distinct([systemID])), Int64.Type}}
+    )
+
