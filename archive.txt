@@ -84,10 +84,10 @@ rm ${BATCH_FILE}
       loop: "{{ gitlab_projects }}"
       register: archive_results
 
-    - name: Output the result
+    - name: Output failed results
       debug:
-        msg: "Project {{ item.item }} archive result: {{ item.status }} - {{ item.json.message }}"
+        msg: "Project {{ item.item }} failed to archive with status {{ item.status }} - {{ item.json.message if item.json is defined else 'No error message' }}"
       loop: "{{ archive_results.results }}"
-      when: item.status != 200
+      when: item.status == 400
 
 
