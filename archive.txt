@@ -51,50 +51,33 @@ rm ${BATCH_FILE}
 
 
 ---
-- name: Archive GitLab Projects by Group and Project Name
+- name: Archive GitLab Projects
   hosts: localhost
   gather_facts: no
   vars:
-    gitlab_url: "https://gitlab.com" # Change this to your GitLab instance URL if self-hosted
-    gitlab_token: "your_personal_access_token" # Replace with your personal access token
-    projects:
-      - { group: "group1", project: "project1" }
-      - { group: "group2", project: "project2" }
-      - { group: "group3", project: "project3" }
+    gitlab_url: "https://gitlab.example.com"
+    gitlab_token: "your_gitlab_token"
+    gitlab_group: "your_group_name"
+    gitlab_projects:
+      - "project1"
+      - "project2"
+      - "project3"
 
   tasks:
-    - name: Get project ID for each project
+    - name: Archive GitLab project
       uri:
-        url: "{{ gitlab_url }}/api/v4/projects/{{ item.group }}%2F{{ item.project }}"
-        method: GET
-        headers:
-          PRIVATE-TOKEN: "{{ gitlab_token }}"
-        validate_certs: yes
-      register: project_ids
-      with_items: "{{ projects }}"
-      failed_when: project_ids.status != 200
-
-    - name: Set fact for project IDs
-      set_fact:
-        project_ids_list: "{{ project_ids_list | default([]) + [ { 'group': item.item.group, 'project': item.item.project, 'id': project_ids.results[item | index].json.id } ] }}"
-      with_items: "{{ project_ids.results }}"
-      when: item.status == 200
-
-    - name: Archive the GitLab projects
-      uri:
-        url: "{{ gitlab_url }}/api/v4/projects/{{ item.id }}"
+        url: "{{ gitlab_url }}/api/v4/projects/{{ gitlab_group | urlencode }}%2F{{ item | urlencode }}"
         method: PUT
         headers:
           PRIVATE-TOKEN: "{{ gitlab_token }}"
-          Content-Type: "application/json"
-        body: '{"archived": true}'
         body_format: json
-        validate_certs: yes
-      register: result
-      with_items: "{{ project_ids_list }}"
-      when: item.id is defined
+        body:
+          archived: true
+      loop: "{{ gitlab_projects }}"
+      register: archive_results
 
-    - name: Debug response for each project
+    - name: Output the result
       debug:
-        msg: "Project {{ item.item.project }} in group {{ item.item.group }} archived with response: {{ item }}"
-      with_items: "{{ result.results }}"
+        msg: "Project {{ item.item }} archive result: {{ item.status }}"
+      loop: "{{ archive_results.results }}"
+
