@@ -64,30 +64,37 @@ rm ${BATCH_FILE}
       - "project3"
 
   tasks:
-    - name: Debug the project URL and body
-      debug:
-        msg:
-          - "URL: {{ gitlab_url }}/api/v4/projects/{{ gitlab_group | urlencode }}%2F{{ item | urlencode }}"
-          - "Body: {\"archived\": true}"
-      loop: "{{ gitlab_projects }}"
-
-    - name: Archive GitLab project
+    - name: Get list of projects in the group
       uri:
-        url: "{{ gitlab_url }}/api/v4/projects/{{ gitlab_group | urlencode }}%2F{{ item | urlencode }}"
-        method: PUT
+        url: "{{ gitlab_url }}/api/v4/groups/{{ gitlab_group | urlencode }}/projects"
+        method: GET
         headers:
           PRIVATE-TOKEN: "{{ gitlab_token }}"
         body_format: json
-        body:
-          archived: true
-        status_code: 200, 201, 400
-      loop: "{{ gitlab_projects }}"
+      register: project_list
+
+    - name: Set project IDs to archive
+      set_fact:
+        projects_to_archive: "{{ project_list.json | selectattr('name', 'in', gitlab_projects) | map(attribute='id') | list }}"
+
+    - name: Debug project IDs
+      debug:
+        msg: "Project IDs to archive: {{ projects_to_archive }}"
+
+    - name: Archive GitLab project
+      uri:
+        url: "{{ gitlab_url }}/api/v4/projects/{{ item }}/archive"
+        method: POST
+        headers:
+          PRIVATE-TOKEN: "{{ gitlab_token }}"
+        status_code: [200, 201, 204]
+      loop: "{{ projects_to_archive }}"
       register: archive_results
 
-    - name: Output failed results
+    - name: Output the result
       debug:
-        msg: "Project {{ item.item }} failed to archive with status {{ item.status }} - {{ item.json.message if item.json is defined else 'No error message' }}"
+        msg: "Project ID {{ item.item }} archive result: {{ item.status }}"
       loop: "{{ archive_results.results }}"
-      when: item.status == 400
+
 
 
