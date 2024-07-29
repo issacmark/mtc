@@ -77,24 +77,32 @@ rm ${BATCH_FILE}
       set_fact:
         projects_to_archive: "{{ project_list.json | selectattr('name', 'in', gitlab_projects) | map(attribute='id') | list }}"
 
-    - name: Debug project IDs
-      debug:
-        msg: "Project IDs to archive: {{ projects_to_archive }}"
-
     - name: Archive GitLab project
       uri:
         url: "{{ gitlab_url }}/api/v4/projects/{{ item }}/archive"
         method: POST
         headers:
           PRIVATE-TOKEN: "{{ gitlab_token }}"
-        status_code: [200, 201, 204]
+        status_code: [200, 201, 204, 400]
       loop: "{{ projects_to_archive }}"
       register: archive_results
 
-    - name: Output the result
+    - name: Collect archive messages
+      set_fact:
+        archive_messages: >-
+          {{
+            archive_results.results | map(
+              attribute='json' | default({'message': 'No error message'})
+            ) | map(
+              'combine', {'status': item.status, 'id': item.item}
+            ) | list
+          }}
+
+    - name: Output archive messages
       debug:
-        msg: "Project ID {{ item.item }} archive result: {{ item.status }}"
-      loop: "{{ archive_results.results }}"
+        msg: "Project ID {{ item.id }} archived with status {{ item.status }} - Message: {{ item.message }}"
+      loop: "{{ archive_messages }}"
+
 
 
 
