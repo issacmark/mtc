@@ -49,9 +49,8 @@ fi
 # Clean up: Optionally remove the batch file
 rm ${BATCH_FILE}
 
-
 ---
-- name: Archive GitLab Projects
+- name: Archive GitLab Projects with Pagination and Timestamp
   hosts: localhost
   gather_facts: no
   vars:
@@ -62,20 +61,38 @@ rm ${BATCH_FILE}
       - "project1"
       - "project2"
       - "project3"
+    output_file: "/path/to/playbook_output.txt"
+    per_page: 100
 
   tasks:
-    - name: Get list of projects in the group
+    - name: Initialize project list
+      set_fact:
+        all_projects: []
+
+    - name: Fetch projects from all pages
       uri:
-        url: "{{ gitlab_url }}/api/v4/groups/{{ gitlab_group | urlencode }}/projects"
+        url: "{{ gitlab_url }}/api/v4/groups/{{ gitlab_group | urlencode }}/projects?per_page={{ per_page }}&page={{ item }}"
         method: GET
         headers:
           PRIVATE-TOKEN: "{{ gitlab_token }}"
         body_format: json
       register: project_list
+      loop: "{{ range(1, 100) | list }}"  # Assuming a maximum of 100 pages
+      until: project_list.json | length == 0
+      retries: 1
+      delay: 0
+
+    - name: Accumulate projects
+      set_fact:
+        all_projects: "{{ all_projects + project_list.json }}"
 
     - name: Set project IDs to archive
       set_fact:
-        projects_to_archive: "{{ project_list.json | selectattr('name', 'in', gitlab_projects) | map(attribute='id') | list }}"
+        projects_to_archive: "{{ all_projects | selectattr('name', 'in', gitlab_projects) | map(attribute='id') | list }}"
+
+    - name: Get current time
+      set_fact:
+        current_time: "{{ lookup('pipe', 'date +%Y-%m-%dT%H:%M:%S%z') }}"
 
     - name: Archive GitLab project
       uri:
@@ -87,21 +104,12 @@ rm ${BATCH_FILE}
       loop: "{{ projects_to_archive }}"
       register: archive_results
 
-    - name: Collect archive messages
-      set_fact:
-        archive_messages: >-
-          {{
-            archive_results.results | map(
-              attribute='json' | default({'message': 'No error message'})
-            ) | map(
-              'combine', {'status': item.status, 'id': item.item}
-            ) | list
-          }}
-
-    - name: Output archive messages
-      debug:
-        msg: "Project ID {{ item.id }} archived with status {{ item.status }} - Message: {{ item.message }}"
-      loop: "{{ archive_messages }}"
+    - name: Output archive messages to file
+      lineinfile:
+        path: "{{ output_file }}"
+        line: "Project ID {{ item.item }} archived at {{ current_time }} with status {{ item.status }} - Message: {{ item.json.message if item.json is defined else 'No error message' }}"
+        create: yes
+      loop: "{{ archive_results.results }}"
 
 
 
