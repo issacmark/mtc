@@ -74,3 +74,16 @@ GENERATE(
     )
 )
 
+SelectedMonthValue = 
+IF(
+    ISFILTERED(MonthTable[MonthNumber]),
+    CALCULATE(
+        SUM(YourTable[YourValueColumn]),
+        FILTER(
+            YourTable,
+            YourTable[MonthColumn] = SELECTEDVALUE(MonthTable[MonthNumber])
+        )
+    ),
+    0
+)
+
