@@ -1,60 +1,22 @@
 #!/bin/bash
+url="sftp://sftp.server.com/path/to/remote/file.txt"
+output="localfile.txt"
+max_attempts=20
+delay=30  # seconds between attempts
 
-# Variables
-SFTP_HOST="sftp.example.com"
-SFTP_USER="your_username"
-SFTP_PASS="your_password"
-REMOTE_FILE_PATH="/remote/path/to/file.txt"
-LOCAL_FILE_PATH="/local/path/to/file.txt"
-MAX_WAIT_TIME=600  # Maximum wait time in seconds (10 minutes)
-CHECK_INTERVAL=10  # Time interval between checks in seconds
-
-# Function to check and download the file
-download_file() {
-    # Use sftp to check if the file exists
-    sftp -oBatchMode=no -b - $SFTP_USER@$SFTP_HOST << EOF
-    ls $REMOTE_FILE_PATH
-    EOF
-
+attempt=1
+while [ $attempt -le $max_attempts ]; do
+    curl -u username:password $url -o $output
     if [ $? -eq 0 ]; then
-        # File exists, proceed with download
-        echo "File found, downloading..."
-        sftp -oBatchMode=no -b - $SFTP_USER@$SFTP_HOST << EOF
-        get $REMOTE_FILE_PATH $LOCAL_FILE_PATH
-        EOF
-
-        if [ $? -eq 0 ]; then
-            echo "File downloaded successfully."
-            return 0
-        else
-            echo "Failed to download file."
-            return 1
-        fi
-    else
-        # File doesn't exist
-        echo "File not found. Waiting..."
-        return 1
-    fi
-}
-
-# Start time
-START_TIME=$(date +%s)
-
-# Loop until the file is found or the max wait time is reached
-while true; do
-    download_file
-
-    if [ $? -eq 0 ]; then
+        echo "File downloaded successfully."
         break
+    else
+        echo "Attempt $attempt failed. Retrying in $delay seconds..."
+        sleep $delay
     fi
-
-    CURRENT_TIME=$(date +%s)
-    ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
-
-    if [ $ELAPSED_TIME -ge $MAX_WAIT_TIME ]; then
-        echo "Timeout reached. File not found."
-        exit 1
-    fi
-
-    sleep $CHECK_INTERVAL
+    attempt=$((attempt+1))
 done
+
+if [ $attempt -gt $max_attempts ]; then
+    echo "File could not be downloaded after $max_attempts attempts."
+fi
