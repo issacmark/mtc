@@ -90,3 +90,45 @@ if sftp -q "$sftp_user@$sftp_host" <<< "$check_file_command" 2>/dev/null; then
 else
     echo "File does not exist."
 fi
+
+
+import paramiko
+import time
+
+def download_file_with_retries(host, port, username, password, remote_file, local_file, max_retries=5, delay=10):
+    # Initialize the SFTP connection
+    transport = paramiko.Transport((host, port))
+    transport.connect(username=username, password=password)
+    sftp = paramiko.SFTPClient.from_transport(transport)
+
+    attempt = 1
+    while attempt <= max_retries:
+        try:
+            sftp.get(remote_file, local_file)
+            print(f"File downloaded successfully on attempt {attempt}.")
+            break
+        except Exception as e:
+            print(f"Attempt {attempt} failed: {e}")
+            if attempt == max_retries:
+                print(f"Failed to download the file after {max_retries} attempts.")
+                break
+            else:
+                print(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+                attempt += 1
+
+    # Close the SFTP connection
+    sftp.close()
+    transport.close()
+
+# Example usage
+download_file_with_retries(
+    host="sftp.server.com",
+    port=22,
+    username="your_username",
+    password="your_password",
+    remote_file="/path/to/remote/file.txt",
+    local_file="local_file.txt",
+    max_retries=5,
+    delay=10
+)
