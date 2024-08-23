@@ -132,3 +132,46 @@ download_file_with_retries(
     max_retries=5,
     delay=10
 )
+
+
+# Define the SFTP details and local paths
+$SftpServer = "sftp.example.com"
+$SftpUser = "your_username"
+$SftpPassword = "your_password"
+$RemoteFolderPath = "/remote/path"
+$LocalFolderPath = "C:\local\path"
+$RepoUrl = "https://github.com/your-repo.git"
+
+# Install PSSFTP module if not already installed
+if (-not (Get-Module -ListAvailable -Name PSSFTP)) {
+    Install-Module -Name PSSFTP -Force -Scope CurrentUser
+}
+
+# Import the PSSFTP module
+Import-Module PSSFTP
+
+# Connect to SFTP
+$SftpSession = New-SFTPSession -ComputerName $SftpServer -Credential (New-Object System.Management.Automation.PSCredential($SftpUser, (ConvertTo-SecureString $SftpPassword -AsPlainText -Force)))
+
+# Download change.yml and source_branch.txt
+Get-SFTPFile -SessionId $SftpSession.SessionId -RemoteFile "$RemoteFolderPath/change.yml" -LocalPath "$LocalFolderPath\change.yml"
+Get-SFTPFile -SessionId $SftpSession.SessionId -RemoteFile "$RemoteFolderPath/source_branch.txt" -LocalPath "$LocalFolderPath\source_branch.txt"
+
+# Disconnect from SFTP
+Remove-SFTPSession -SessionId $SftpSession.SessionId
+
+# Read the branch name from source_branch.txt
+$BranchName = Get-Content "$LocalFolderPath\source_branch.txt"
+
+# Clone the Git repository from the specified branch
+git clone -b $BranchName $RepoUrl "$LocalFolderPath\repo"
+
+# Define the path within the cloned repository where terragrunt will be run
+$TerragruntPath = "$LocalFolderPath\repo\path\to\terragrunt\directory"
+
+# Change the directory to the specified path and run terragrunt plan
+Set-Location -Path $TerragruntPath
+terragrunt plan
+
+# Restore the original working directory
+Set-Location -Path $LocalFolderPath
