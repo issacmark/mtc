@@ -1,0 +1,13 @@
+IsMatchGeneric = 
+VAR SelectedDept = SELECTEDVALUE(Table1[Department])
+VAR SelectedTeam = SELECTEDVALUE(Table1[IT Team])
+VAR SelectedMaint = SELECTEDVALUE(Table1[Maintained])
+RETURN
+    COUNTROWS(
+        FILTER(
+            Table2,  // Change this to Table3, Table4, etc., for other measures
+            (Table2[Department] = SelectedDept || ISBLANK(SelectedDept)) &&
+            (Table2[IT Team] = SelectedTeam || ISBLANK(SelectedTeam)) &&
+            (Table2[Maintained] = SelectedMaint || ISBLANK(SelectedMaint))
+        )
+    )
