@@ -1,0 +1,29 @@
+---
+- name: Call API Example with Multiple IDs and Vault
+  hosts: localhost
+  vars_files:
+    - vault.yml  # Ensure this file is accessible
+  tasks:
+    - name: Read JSON file
+      slurp:
+        src: data.json
+      register: json_data
+
+    - name: Convert JSON content to dictionary
+      set_fact:
+        json_dict: "{{ json_data.content | b64decode | from_json }}"
+
+    - name: Make API calls for each ID
+      uri:
+        url: "http://api.example.com/resource/{{ item }}"
+        method: GET
+        headers:
+          x-access-key: "{{ access_key }}"  # Access key from vault
+        return_content: yes
+      loop: "{{ json_dict.ids }}"
+      register: responses
+
+    - name: Debug all responses
+      debug:
+        msg: "Response for ID {{ item.item }}: {{ item.content }}"
+      loop: "{{ responses.results }}"
