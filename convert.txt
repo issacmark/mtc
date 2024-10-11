@@ -1,4 +1,6 @@
-# Original data as a string
+import yaml
+
+# Original YAML data
 data = """
 key1:
   - value1
@@ -8,24 +10,14 @@ key2:
   - value4
 """
 
-# Parsing the data manually
-result = {}
-lines = data.strip().splitlines()
-current_key = None
+# Load the YAML data into a Python dictionary
+yaml_data = yaml.safe_load(data)
 
-for line in lines:
-    # Check if the line represents a key
-    if not line.startswith(" "):
-        current_key = line.rstrip(":")
-        result[current_key] = []
-    # Otherwise, it's a value for the current key
-    else:
-        value = line.strip(" -")
-        result[current_key].append(value)
+# Convert the lists to the desired format
+for key in yaml_data:
+    yaml_data[key] = str(yaml_data[key])
 
-# Format the output to the desired representation using string formatting
-formatted_result = {k: '["{}"]'.format('", "'.join(vals)) for k, vals in result.items()}
+# Convert back to YAML format
+formatted_yaml = yaml.dump(yaml_data, default_flow_style=True)
 
-# Print the formatted result
-for key, value in formatted_result.items():
-    print(f"{key}: {value}")
+print(formatted_yaml)
