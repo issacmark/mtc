@@ -23,8 +23,8 @@ for line in lines:
         value = line.strip(" -")
         result[current_key].append(value)
 
-# Format the output to the desired representation
-formatted_result = {k: f'[{", ".join(f\'"{v}"\' for v in vals)}]' for k, vals in result.items()}
+# Format the output to the desired representation using string formatting
+formatted_result = {k: '["{}"]'.format('", "'.join(vals)) for k, vals in result.items()}
 
 # Print the formatted result
 for key, value in formatted_result.items():
