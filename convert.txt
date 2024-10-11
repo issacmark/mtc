@@ -20,7 +20,7 @@ data = """
 """
 
 # Create a YAML object to handle parsing
-yaml = YAML()
+yaml = YAML(typ='safe')  # Using 'safe' type to avoid modifying the data unintentionally
 yaml_data = yaml.load(data)
 
 # Process each rule block and convert lists to the desired format
