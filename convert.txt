@@ -1,48 +1,37 @@
 from ruamel.yaml import YAML
-from ruamel.yaml.constructor import DuplicateKeyError
-from collections import defaultdict
 
-# Original YAML data with duplicate keys
+# Original YAML data representing Kubernetes RBAC definition
 data = """
-key1:
-  - value1
-  - value2
-key2:
-  - value3
-  - value4
-key1:
-  - value5
+- apiGroups:
+    - ''
+  resources:
+    - Pods
+    - Deployments
+  verbs:
+    - get
+    - list
+- apiGroups:
+    - apps
+  resources:
+    - Pods
+  verbs:
+    - create
+    - delete
 """
 
-# Create a YAML object with special settings to handle duplicate keys
-yaml = YAML(typ='rt')  # 'rt' stands for RoundTrip to preserve data as is
-yaml.preserve_quotes = True
+# Create a YAML object to handle parsing
+yaml = YAML()
+yaml_data = yaml.load(data)
 
-# Use a defaultdict to handle duplicate keys and merge their values into lists
-result = defaultdict(list)
+# Process each rule block and convert lists to the desired format
+formatted_blocks = []
 
-try:
-    yaml_data = yaml.load(data)
+for entry in yaml_data:
+    formatted_entry = {key: f'["{", ".join(values)}"]' for key, values in entry.items()}
+    formatted_blocks.append(formatted_entry)
 
-    # Populate the defaultdict with parsed YAML data, merging duplicates
-    for key, value in yaml_data.items():
-        result[key].extend(value)
-
-except DuplicateKeyError as e:
-    print(f"Duplicate key error: {e}. Handling duplicates...")
-
-    # Manually parse the data to handle duplicate keys
-    lines = data.strip().splitlines()
-    for line in lines:
-        if not line.startswith(" "):
-            current_key = line.rstrip(":")
-        else:
-            value = line.strip(" -")
-            result[current_key].append(value)
-
-# Format the defaultdict to the desired format with square brackets
-formatted_result = {k: f'["{", ".join(v)}"]' for k, v in result.items()}
-
-# Print the formatted result
-for key, value in formatted_result.items():
-    print(f"{key}: {value}")
+# Display the formatted result
+for block in formatted_blocks:
+    for key, value in block.items():
+        print(f"{key}: {value}")
+    print()  # Separate blocks with a newline for readability
