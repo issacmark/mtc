@@ -1,6 +1,7 @@
-import yaml
+from ruamel.yaml import YAML
+from collections import defaultdict
 
-# Original YAML data
+# Original YAML data with duplicate keys
 data = """
 key1:
   - value1
@@ -8,16 +9,23 @@ key1:
 key2:
   - value3
   - value4
+key1:
+  - value5
 """
 
-# Load the YAML data into a Python dictionary
-yaml_data = yaml.safe_load(data)
+# Create a YAML object to handle the parsing
+yaml = YAML()
+yaml_data = yaml.load(data)
 
-# Convert the lists to the desired format
-for key in yaml_data:
-    yaml_data[key] = str(yaml_data[key])
+# Use a defaultdict to handle duplicate keys and merge their values into lists
+result = defaultdict(list)
 
-# Convert back to YAML format
-formatted_yaml = yaml.dump(yaml_data, default_flow_style=True)
+for key, value in yaml_data.items():
+    result[key].extend(value)
 
-print(formatted_yaml)
+# Convert the defaultdict to the desired format with square brackets
+formatted_result = {k: f'["{", ".join(v)}"]' for k, v in result.items()}
+
+# Print the formatted result
+for key, value in formatted_result.items():
+    print(f"{key}: {value}")
