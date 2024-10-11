@@ -1,4 +1,5 @@
 from ruamel.yaml import YAML
+from ruamel.yaml.constructor import DuplicateKeyError
 from collections import defaultdict
 
 # Original YAML data with duplicate keys
@@ -13,17 +14,33 @@ key1:
   - value5
 """
 
-# Create a YAML object to handle the parsing
-yaml = YAML()
-yaml_data = yaml.load(data)
+# Create a YAML object with special settings to handle duplicate keys
+yaml = YAML(typ='rt')  # 'rt' stands for RoundTrip to preserve data as is
+yaml.preserve_quotes = True
 
 # Use a defaultdict to handle duplicate keys and merge their values into lists
 result = defaultdict(list)
 
-for key, value in yaml_data.items():
-    result[key].extend(value)
+try:
+    yaml_data = yaml.load(data)
 
-# Convert the defaultdict to the desired format with square brackets
+    # Populate the defaultdict with parsed YAML data, merging duplicates
+    for key, value in yaml_data.items():
+        result[key].extend(value)
+
+except DuplicateKeyError as e:
+    print(f"Duplicate key error: {e}. Handling duplicates...")
+
+    # Manually parse the data to handle duplicate keys
+    lines = data.strip().splitlines()
+    for line in lines:
+        if not line.startswith(" "):
+            current_key = line.rstrip(":")
+        else:
+            value = line.strip(" -")
+            result[current_key].append(value)
+
+# Format the defaultdict to the desired format with square brackets
 formatted_result = {k: f'["{", ".join(v)}"]' for k, v in result.items()}
 
 # Print the formatted result
