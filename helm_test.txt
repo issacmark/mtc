@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-namespace-configuration
+  annotations:
+    "helm.sh/hook": test
+spec:
+  template:
+    spec:
+      containers:
+      - name: test
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Test namespace existence
+          if ! kubectl get namespace {{ .Release.Namespace }}; then
+            echo "Namespace does not exist!"
+            exit 1
+          fi
+
+          # Test Resource Quotas
+          if ! kubectl get resourcequota -n {{ .Release.Namespace }}; then
+            echo "Resource Quota does not exist!"
+            exit 1
+          fi
+
+          # Test RoleBindings for correct account privileges
+          if ! kubectl get rolebinding -n {{ .Release.Namespace }} | grep 'edit'; then
+            echo "Expected RoleBinding not found!"
+            exit 1
+          fi
+
+          # Test network policies
+          if ! kubectl get networkpolicy -n {{ .Release.Namespace }}; then
+            echo "Network Policy not found!"
+            exit 1
+          fi
+          
+          echo "All tests passed!"
+        restartPolicy: Never
+      restartPolicy: Never
