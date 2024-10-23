@@ -27,3 +27,34 @@
       debug:
         msg: "Response for ID {{ item.item }}: {{ item.content }}"
       loop: "{{ responses.results }}"
+
+
+
+---
+# First play: Runs on localhost
+- name: Tasks running on localhost (1st block)
+  hosts: localhost
+  gather_facts: false  # Optional, if you don't need facts
+  tasks:
+    - name: Task 1 on localhost
+      command: echo "This is running on localhost"
+
+# Second play: Runs on all remote hosts
+- name: Tasks running on remote hosts
+  hosts: all
+  gather_facts: false  # Optional, if you don't need facts
+  tasks:
+    - name: Task 1 on remote hosts
+      command: echo "This is running on remote hosts"
+      
+    - name: Use variable from localhost (if applicable)
+      debug:
+        msg: "Variable shared_variable from localhost is: {{ shared_variable }}"
+
+# Third play: Runs on localhost again
+- name: Tasks running on localhost (2nd block)
+  hosts: localhost
+  gather_facts: false  # Optional, if you don't need facts
+  tasks:
+    - name: Task 2 on localhost
+      command: echo "This is the second block on localhost"
